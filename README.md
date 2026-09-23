@@ -1,26 +1,39 @@
-# GITCOGNITO
+# GitCognito 🚀
 
-A lightweight, privacy-focused security tool designed to identify and mask sensitive credentials, API keys, and personal identifiable information (PII) before code is committed or pushed to public repositories.
-
----
-
-## Key Features
-
-* **Real-time Secret Detection:** Scans codebases for API keys, passwords, tokens, and PII patterns.
-* **Pre-commit Integration:** Seamlessly plugs into developer workflows to catch sensitive data before it reaches remote repositories.
-* **Automatic Redaction:** Safely masks exposed credentials without interrupting deployment speed or build pipelines.
-* **Privacy-First Architecture:** Performs scans locally to ensure your sensitive code and data never leave your workspace.
+GitCognito is an intelligent, full-stack application that connects to GitHub repositories, indexes codebase files asynchronously, generates vector embeddings, and provides AI-powered code analysis and chat capabilities.
 
 ---
 
-## Getting Started
+## 🏗️ System Architecture & Indexing Flow
+
+The core backend handles repository indexing via a robust asynchronous pipeline designed to process files efficiently without blocking the user interface.
+### Key Workflow Phases:
+1. **Trigger Layer:** Users initiate indexing from the frontend dashboard via a `POST /api/repos/{id}/index` request.
+2. **Synchronous Validation:** The `RepoController` validates repository ownership, prevents duplicate concurrent indexing jobs, and updates the database status to `INDEXING`.
+3. **Asynchronous Execution (`doIndex`):** 
+   - Clears existing vector embeddings for the repository.
+   - Fetches the repository tree using the GitHub API (`GitHubApiClient`).
+   - Filters out unwanted files (such as `node_modules`, lock files, binaries, and oversized files) using `CodeFileFilter`.
+4. **Chunking & Vector Storage Loop:** 
+   - Files are fetched individually, parsed, and split into code chunks via `CodeChunker`.
+   - Chunks are batched (batches of 32) and sent to the OpenAI Embeddings API.
+   - Embeddings are securely stored in PostgreSQL using the `pgvector` extension.
+5. **Real-time Progress Tracking:** The frontend polls `GET /api/repos/{id}/status` every 3–5 seconds to display live progress bars until the status turns `READY`.
+
+---
+
+## 🛠️ Tech Stack
+
+* **Backend:** Java, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL (`pgvector`)
+* **Frontend:** Next.js, React, Tailwind CSS
+* **Infrastructure & Tools:** Docker, Docker Compose, Maven, GitHub API, OpenAI API
+
+---
+
+## ⚙️ Getting Started & Local Setup
 
 ### Prerequisites
-
-* Git installed on your local machine
-* Supported runtime (e.g., Python 3.8+ or Node.js)
-
-### Installation
-
-Clone the repository and set up the project locally:
+* Java Development Kit (JDK 17+)
+* Node.js & npm
+* Docker and Docker Compose (for PostgreSQL with `pgvector`)
 
