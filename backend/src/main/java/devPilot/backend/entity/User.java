@@ -35,6 +35,9 @@ private Long githubId;
 @Column(name = "github_username", length=225, nullable = false)
 private String githubUsername;
 
+@Column(name = "email", length=320)
+private String email;
+
 @Column(name = "display_name", length=500, nullable = false)
 private String displayName;
 

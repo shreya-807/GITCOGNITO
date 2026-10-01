@@ -79,13 +79,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
-
     private final TextEncryptor tokenEncryptor;
 
     public UserService(
             UserRepository userRepository,
             TextEncryptor tokenEncryptor) {
-
         this.userRepository = userRepository;
         this.tokenEncryptor = tokenEncryptor;
     }
@@ -110,6 +108,11 @@ public class UserService {
                 ? String.valueOf(attributes.get("avatar_url"))
                 : null;
 
+        // FIX: Extract email safely (GitHub can return null if email is private)
+        String email = attributes.get("email") != null
+                ? String.valueOf(attributes.get("email"))
+                : login + "@users.noreply.github.com"; // Safe fallback email format used by GitHub
+
         String encryptedToken =
                 tokenEncryptor.encrypt(accessToken);
 
@@ -120,6 +123,7 @@ public class UserService {
         user.setGithubId(githubId);
         user.setGithubUsername(login);
         user.setDisplayName(name);
+        user.setEmail(email); // FIX: Set the email field so it doesn't violate database constraints
         user.setAvatarUrl(avatarUrl);
         user.setAccessToken(encryptedToken);
         user.setTokenScope(scopes);
@@ -129,7 +133,6 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public User requiredById(UUID id) {
-
         return userRepository
                 .findById(id)
                 .orElseThrow(
@@ -140,14 +143,12 @@ public class UserService {
     }
 
     public String decryptAccessToken(User user) {
-
         return tokenEncryptor.decrypt(
                 user.getAccessToken()
         );
     }
 
     private static Long toLong(Object value) {
-
         if (value instanceof Number number) {
             return number.longValue();
         }
